@@ -23,9 +23,8 @@ public class Subgraph {
         nodeWriter.write("node_id,original_indegree");
         nodeWriter.newLine();
 
-        // for (node_id : this.vertices.)
-
+        for (node_id : this.vertices.)
         
-        writer.close();
+        nodeWriter.close();
     }
 }

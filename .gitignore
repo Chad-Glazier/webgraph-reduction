@@ -1,3 +1,4 @@
 data/*
 reduced_data/*
-
+target/*
+.vscode
