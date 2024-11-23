@@ -81,7 +81,26 @@ public class Subgraph {
     public SimpleDirectedGraph<Integer, DefaultEdge> asSimpleDigraph() {
         SimpleDirectedGraph<Integer, DefaultEdge> graph = new SimpleDirectedGraph<>(DefaultEdge.class);
 
-        // todo: construct a jgrapht object then return it.
+        HashSet<Integer> includedIds = new HashSet<>();
+        for (int vertex : this.vertices) {
+            graph.addVertex(vertex);
+            includedIds.add(vertex);
+        }
+
+        NodeIterator iter = this.originalGraph.nodeIterator();
+        while (iter.hasNext()) {
+            int currentId = iter.nextInt();
+            if (!includedIds.contains(currentId)) continue;
+            HashSet<Integer> distinctSuccessors = new HashSet<>();
+            for (int successor : iter.successorArray()) {
+                if (includedIds.contains(successor)) {
+                    distinctSuccessors.add(successor);
+                }
+            }
+            for (int distinctSuccessor : distinctSuccessors) {
+                graph.addEdge(currentId, distinctSuccessor);
+            }
+        }
 
         return graph;
     }
