@@ -1,2 +1,1 @@
-- fix the topindegreestats class
-- figure out how to print out subgraph for toppagerankstats.
+- figure out how to print out subgraph for TopPageRankStats.

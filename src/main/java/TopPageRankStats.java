@@ -2,7 +2,6 @@ import org.jgrapht.graph.SimpleDirectedGraph;
 
 import java.util.Map;
 import java.util.PriorityQueue;
-import java.util.HashMap;
 
 import org.jgrapht.alg.scoring.PageRank;
 import org.jgrapht.graph.DefaultEdge;

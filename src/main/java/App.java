@@ -12,7 +12,7 @@ public class App {
             // final ImmutableGraph transposeGraph2024 = BVGraph.loadOffline("data/2024-t");
             final String outdir = "reduced_data/";
 
-            final int n = 10000;
+            final int n = 1000;
             TopIndegreeStats top = new TopIndegreeStats(n, transposeGraph2017, true);
             Subgraph sub = new Subgraph(top.nodeId, top.nodeIndegree, graph2017);
             sub.writeToFiles(outdir + "2017_top_" + Integer.toString(n), "data/2017-node-domains.txt");
