@@ -1,4 +1,5 @@
 import java.util.HashSet;
+import java.util.PriorityQueue;
 
 import it.unimi.dsi.webgraph.ImmutableGraph;
 import it.unimi.dsi.webgraph.NodeIterator;
@@ -14,6 +15,29 @@ public class TopIndegreeStats {
         this.n = n;
 
         NodeIterator iter = transposeGraph.nodeIterator();
+        PriorityQueue<Integer> topIndegrees = new PriorityQueue<>(n);
+        while(iter.hasNext()) {
+            int currentId = iter.nextInt();
+            int currentIndegree = 0;
+            if (simpleGraph) {
+                int[] predecessors = iter.successorArray();
+                int predecessorCount = iter.outdegree();
+                HashSet<Integer> distinctPredecessors = new HashSet<Integer>();
+                for (int i = 0; i < predecessorCount; i++) {
+                    distinctPredecessors.add(predecessors[i]);
+                }
+                distinctPredecessors.remove(currentId);
+                currentIndegree = distinctPredecessors.size();
+            } else {
+                currentIndegree = iter.outdegree();
+            }
+            if (topIndegrees )
+            if (currentIndegree > topIndegrees.peek()) {
+
+            }
+        }
+
+
         int smallestIncludedIndegree = -1;
         while (iter.hasNext()) {
             int currentId = iter.nextInt();

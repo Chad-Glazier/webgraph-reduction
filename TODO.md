@@ -1,1 +1,2 @@
-- implement the PageRankStats class.
+- fix the topindegreestats class
+- figure out how to print out subgraph for toppagerankstats.
