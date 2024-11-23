@@ -5,6 +5,9 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Hashtable;
 
+import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.SimpleDirectedGraph;
+
 import it.unimi.dsi.webgraph.ImmutableGraph;
 import it.unimi.dsi.webgraph.NodeIterator;
 
@@ -73,5 +76,13 @@ public class Subgraph {
             }
         }
         edgeWriter.close();
+    }
+
+    public SimpleDirectedGraph<Integer, DefaultEdge> asSimpleDigraph() {
+        SimpleDirectedGraph<Integer, DefaultEdge> graph = new SimpleDirectedGraph<>(DefaultEdge.class);
+
+        // todo: construct a jgrapht object then return it.
+
+        return graph;
     }
 }
