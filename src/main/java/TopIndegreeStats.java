@@ -5,8 +5,7 @@ import it.unimi.dsi.webgraph.ImmutableGraph;
 import it.unimi.dsi.webgraph.NodeIterator;
 
 public class TopIndegreeStats {
-    public final int[] nodeId;
-    public final int[] nodeIndegree;
+    public final NodeIndegree[] nodes;
 
     TopIndegreeStats(int n, ImmutableGraph transposeGraph, boolean simpleGraph) {
         NodeIterator iter = transposeGraph.nodeIterator();
@@ -36,12 +35,9 @@ public class TopIndegreeStats {
             }
         }
 
-        this.nodeId = new int[n];
-        this.nodeIndegree = new int[n];
+        this.nodes = new NodeIndegree[n];
         for (int i = 0; i < n; i++) {
-            NodeIndegree node = topIndegrees.poll();
-            this.nodeId[i] = node.id;
-            this.nodeIndegree[i] = node.indegree;
+            this.nodes[i] = topIndegrees.poll();
         }
     }
 }

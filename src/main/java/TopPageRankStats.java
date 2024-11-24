@@ -7,8 +7,7 @@ import org.jgrapht.alg.scoring.PageRank;
 import org.jgrapht.graph.DefaultEdge;
 
 public class TopPageRankStats {
-    public final int[] nodeIds;
-    public final double[] nodeScores;
+    public final NodeScore[] nodes;
 
     TopPageRankStats(int n, SimpleDirectedGraph<Integer, DefaultEdge> graph) {
         PageRank<Integer, DefaultEdge> pagerank = new PageRank<>(graph);
@@ -27,12 +26,9 @@ public class TopPageRankStats {
             }
         }
 
-        this.nodeIds = new int[n];
-        this.nodeScores = new double[n];
+        this.nodes = new NodeScore[n];
         for (int i = 0; i < n; i++) {
-            NodeScore node = topRanks.poll();
-            this.nodeIds[i] = node.id;
-            this.nodeScores[i] = node.score;
+            this.nodes[i] = topRanks.poll();
         }
     }
 }

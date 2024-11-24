@@ -3,7 +3,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Hashtable;
 
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleDirectedGraph;
@@ -12,41 +11,83 @@ import it.unimi.dsi.webgraph.ImmutableGraph;
 import it.unimi.dsi.webgraph.NodeIterator;
 
 public class Subgraph {
-    public final int[] vertices;
-    public final Hashtable<Integer, Integer> originalIndegrees;
+    public final NodeScore[] nodeScores;
+    public final NodeIndegree[] nodeIndegrees;
     public final ImmutableGraph originalGraph;
+    private final String metricDescription;
 
-    /**
-     * @param nodeIds this array will be copied, and will not be mutated.
-     * @param originalIndegrees this array will have the original in-degree of each node:
-     * {@code nodeIds[i]} should have the original in-degree of {@code originalIndegrees[i]}.
-     * @param original a reference to the original webgraph.
-     */
-    Subgraph(int[] nodeIds, int[] originalIndegrees, ImmutableGraph original) {
-        this.originalIndegrees = new Hashtable<Integer, Integer>();
-        for (int i = 0; i < nodeIds.length; i++) {
-            this.originalIndegrees.put(nodeIds[i], originalIndegrees[i]);
-        }
-        this.vertices = Arrays.copyOf(nodeIds, nodeIds.length);
-        Arrays.sort(this.vertices);
+    Subgraph(NodeScore[] nodeScores, ImmutableGraph original) {
+        this.nodeScores = Arrays.copyOf(nodeScores, nodeScores.length);
+        Arrays.sort(this.nodeScores, (a, b) -> Integer.compare(a.id, b.id));
+        this.nodeIndegrees = null;
         this.originalGraph = original;
+        this.metricDescription = "pagerank_score";
+    }
+
+    Subgraph(NodeIndegree[] nodeIndegrees, ImmutableGraph original) {
+        this.nodeIndegrees = Arrays.copyOf(nodeIndegrees, nodeIndegrees.length);
+        Arrays.sort(this.nodeIndegrees, (a, b) -> Integer.compare(a.id, b.id));
+        this.nodeScores = null;
+        this.originalGraph = original;
+        this.metricDescription = "original_simple_indegree";
+    }
+
+    public int[] nodeIds() {
+        int[] includedIds;
+        if (this.nodeIndegrees != null) {
+            includedIds = new int[this.nodeIndegrees.length];
+            for (int i = 0; i < this.nodeIndegrees.length; i++) {
+                includedIds[i] = this.nodeIndegrees[i].id;
+            }
+        } else {
+            // based on the constructors, if this.nodeIndegrees == null then 
+            // this.nodeScores is not.
+            includedIds = new int[this.nodeScores.length];
+            for (int i = 0; i < this.nodeScores.length; i++) {
+                includedIds[i] = this.nodeScores[i].id;
+            }
+        }
+        return includedIds;
     }
 
     public void writeToFiles(String basename, String domainNamesFile) throws IOException {
+        int[] nodeIds = this.nodeIds();
+        NodeDomainMap domainNames = new NodeDomainMap(nodeIds, domainNamesFile);
+
         BufferedWriter nodeWriter = new BufferedWriter(new FileWriter(basename + "_nodes.csv"));
-        nodeWriter.write("node_id,domain_name,original_simple_indegree");
+        nodeWriter.write("node_id,domain_name," + this.metricDescription);
         nodeWriter.newLine();
-        NodeDomainMap domainNames = new NodeDomainMap(this.vertices, domainNamesFile);
-        HashSet<Integer> includedIds = new HashSet<Integer>(this.vertices.length);
-        for (int nodeId : this.vertices) {
-            includedIds.add(nodeId);
-            nodeWriter.write(String.format(
-                "%d,%s,%d",
-                nodeId, 
-                domainNames.get(nodeId), 
-                this.originalIndegrees.get(nodeId)
-            ));
-            nodeWriter.newLine();
+        HashSet<Integer> includedIds = new HashSet<Integer>(nodeIds.length);
+        if (this.nodeIndegrees != null) {
+            // sort based on indegree (descending)
+            Arrays.sort(this.nodeIndegrees, (a, b) -> Integer.compare(b.indegree, a.indegree));
+            for (NodeIndegree node : this.nodeIndegrees) {
+                includedIds.add(node.id);
+                nodeWriter.write(String.format(
+                    "%d,%s,%d",
+                    node.id, 
+                    domainNames.get(node.id),
+                    node.indegree                    
+                ));
+                nodeWriter.newLine();
+            }
+            // restore original ordering based on id
+            Arrays.sort(this.nodeIndegrees, (a, b) -> Integer.compare(a.id, b.id));
+        } else {
+            // sort based on score (descending)
+            Arrays.sort(this.nodeScores, (a, b) -> Double.compare(b.score, a.score));
+            for (NodeScore node : this.nodeScores) {
+                includedIds.add(node.id);
+                nodeWriter.write(String.format(
+                    "%d,%s,%f",
+                    node.id, 
+                    domainNames.get(node.id),
+                    node.score                    
+                ));
+                nodeWriter.newLine();
+            }
+            // restore original ordering based on id
+            Arrays.sort(this.nodeScores, (a, b) -> Integer.compare(a.id, b.id));
         }
         nodeWriter.close();
 
@@ -81,26 +122,39 @@ public class Subgraph {
     public SimpleDirectedGraph<Integer, DefaultEdge> asSimpleDigraph() {
         SimpleDirectedGraph<Integer, DefaultEdge> graph = new SimpleDirectedGraph<>(DefaultEdge.class);
 
-        HashSet<Integer> includedIds = new HashSet<>();
-        for (int vertex : this.vertices) {
-            graph.addVertex(vertex);
-            includedIds.add(vertex);
+        if (this.nodeIndegrees != null) {
+            for (NodeIndegree node : this.nodeIndegrees) {
+                graph.addVertex(node.id);
+            }
+        } else {
+            // based on the constructors, if this.nodeIndegrees == null then 
+            // this.nodeScores is not.
+            for (NodeScore node : this.nodeScores) {
+                graph.addVertex(node.id);
+            }
         }
+
+        int edgesAdded = 0;
 
         NodeIterator iter = this.originalGraph.nodeIterator();
         while (iter.hasNext()) {
             int currentId = iter.nextInt();
-            if (!includedIds.contains(currentId)) continue;
+            if (!graph.containsVertex(currentId)) continue;
             HashSet<Integer> distinctSuccessors = new HashSet<>();
             for (int successor : iter.successorArray()) {
-                if (includedIds.contains(successor)) {
+                if (graph.containsVertex(successor)) {
                     distinctSuccessors.add(successor);
                 }
             }
+            distinctSuccessors.remove(currentId);
             for (int distinctSuccessor : distinctSuccessors) {
                 graph.addEdge(currentId, distinctSuccessor);
+                edgesAdded++;
+                if (edgesAdded % 1000000 == 0) System.out.printf("%d edges added.\n", edgesAdded); 
             }
         }
+
+        System.out.printf("%d total edges added, graph successfully created.\n", edgesAdded);
 
         return graph;
     }
