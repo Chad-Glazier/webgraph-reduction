@@ -10,14 +10,18 @@ public class App {
     public static void main(String[] args) {
         String[] years = {"2018", "2024"};
         for (String year : years) {
-            // generate a graph with the top 7K in-degrees, and one
-            // with the top 5K pagerank scores from that subgraph.
+            // generate a graph with the top 30K in-degrees, and one
+            // with the top 10K pagerank scores from that subgraph.
+            //
+            // 30K nodes (which is about 10 million edges) is about
+            // the limit of why my PC can do. You're welcome to try
+            // higher numbers if you have a lot of RAM.
             generateReducedGraphs(
                 year,
                 "data/" + year, 
                 "data/" + year + "-t",
                 "data/" + year + "-node-domains.txt",
-                35000,
+                30000,
                 10000
             );
         }
