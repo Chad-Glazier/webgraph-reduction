@@ -8,23 +8,17 @@ import it.unimi.dsi.webgraph.ImmutableGraph;
 
 public class App {
     public static void main(String[] args) {
-        String[] years = {"2024", "2018"};
+        String[] years = {"2018", "2024"};
         for (String year : years) {
+            // generate a graph with the top 7K in-degrees, and one
+            // with the top 5K pagerank scores from that subgraph.
             generateReducedGraphs(
                 year,
                 "data/" + year, 
                 "data/" + year + "-t",
                 "data/" + year + "-node-domains.txt",
-                7000,
-                0
-            );
-            generateReducedGraphs(
-                year,
-                "data/" + year, 
-                "data/" + year + "-t",
-                "data/" + year + "-node-domains.txt",
-                15000,
-                0
+                35000,
+                10000
             );
         }
     }

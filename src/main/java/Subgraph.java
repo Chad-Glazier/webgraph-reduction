@@ -54,6 +54,10 @@ public class Subgraph {
         int[] nodeIds = this.nodeIds();
         NodeDomainMap domainNames = new NodeDomainMap(nodeIds, domainNamesFile);
 
+        BufferedWriter statsWriter = new BufferedWriter(new FileWriter(basename + "_stats.txt"));
+        statsWriter.write(String.format("total_nodes=%d", nodeIds.length));
+        statsWriter.newLine();
+
         BufferedWriter nodeWriter = new BufferedWriter(new FileWriter(basename + "_nodes.csv"));
         nodeWriter.write("node_id,domain_name," + this.metricDescription);
         nodeWriter.newLine();
@@ -91,6 +95,8 @@ public class Subgraph {
         }
         nodeWriter.close();
 
+        int totalEdgeCount = 0;
+
         BufferedWriter edgeWriter = new BufferedWriter(new FileWriter(basename + "_edges.csv"));
         edgeWriter.write("from_id,to_id");
         edgeWriter.newLine();
@@ -114,9 +120,17 @@ public class Subgraph {
                     successor
                 ));
                 edgeWriter.newLine();
+                totalEdgeCount++;
             }
         }
         edgeWriter.close();
+
+        statsWriter.write(String.format("total_edges=%d", totalEdgeCount));
+        statsWriter.newLine();
+        double density = ((double) totalEdgeCount) / ((double) nodeIds.length * (nodeIds.length - 1f));
+        statsWriter.write(String.format("edge_density=%f", density));
+        statsWriter.newLine();
+        statsWriter.close();
     }
 
     public SimpleDirectedGraph<Integer, DefaultEdge> asSimpleDigraph() {
@@ -134,28 +148,24 @@ public class Subgraph {
             }
         }
 
-        int edgesAdded = 0;
-
         NodeIterator iter = this.originalGraph.nodeIterator();
         while (iter.hasNext()) {
             int currentId = iter.nextInt();
             if (!graph.containsVertex(currentId)) continue;
             HashSet<Integer> distinctSuccessors = new HashSet<>();
-            for (int successor : iter.successorArray()) {
-                if (graph.containsVertex(successor)) {
-                    distinctSuccessors.add(successor);
+            int[] successors = iter.successorArray();
+            int successorCount = iter.outdegree();
+            for (int i = 0; i < successorCount; i++) {
+                if (graph.containsVertex(successors[i])) {
+                    distinctSuccessors.add(successors[i]);
                 }
             }
             distinctSuccessors.remove(currentId);
             for (int distinctSuccessor : distinctSuccessors) {
                 graph.addEdge(currentId, distinctSuccessor);
-                edgesAdded++;
-                if (edgesAdded % 1000000 == 0) System.out.printf("%d edges added.\n", edgesAdded); 
             }
         }
-
-        System.out.printf("%d total edges added, graph successfully created.\n", edgesAdded);
-
+        
         return graph;
     }
 }
