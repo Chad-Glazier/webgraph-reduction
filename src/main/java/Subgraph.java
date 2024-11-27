@@ -40,7 +40,7 @@ public class Subgraph {
                 includedIds[i] = this.nodeIndegrees[i].id;
             }
         } else {
-            // based on the constructors, if this.nodeIndegrees == null then 
+            // based on the constructors, if this.nodeIndegrees == null then
             // this.nodeScores is not.
             includedIds = new int[this.nodeScores.length];
             for (int i = 0; i < this.nodeScores.length; i++) {
@@ -59,7 +59,7 @@ public class Subgraph {
         statsWriter.newLine();
 
         BufferedWriter nodeWriter = new BufferedWriter(new FileWriter(basename + "_nodes.csv"));
-        nodeWriter.write("node_id,domain_name," + this.metricDescription);
+        nodeWriter.write("domain_name," + this.metricDescription);
         nodeWriter.newLine();
         HashSet<Integer> includedIds = new HashSet<Integer>(nodeIds.length);
         if (this.nodeIndegrees != null) {
@@ -68,11 +68,9 @@ public class Subgraph {
             for (NodeIndegree node : this.nodeIndegrees) {
                 includedIds.add(node.id);
                 nodeWriter.write(String.format(
-                    "%d,%s,%d",
-                    node.id, 
-                    domainNames.get(node.id),
-                    node.indegree                    
-                ));
+                        "%s,%d",
+                        domainNames.get(node.id),
+                        node.indegree));
                 nodeWriter.newLine();
             }
             // restore original ordering based on id
@@ -83,11 +81,9 @@ public class Subgraph {
             for (NodeScore node : this.nodeScores) {
                 includedIds.add(node.id);
                 nodeWriter.write(String.format(
-                    "%d,%s,%f",
-                    node.id, 
-                    domainNames.get(node.id),
-                    node.score                    
-                ));
+                        "%s,%f",
+                        domainNames.get(node.id),
+                        node.score));
                 nodeWriter.newLine();
             }
             // restore original ordering based on id
@@ -98,7 +94,7 @@ public class Subgraph {
         int totalEdgeCount = 0;
 
         BufferedWriter edgeWriter = new BufferedWriter(new FileWriter(basename + "_edges.csv"));
-        edgeWriter.write("from_id,to_id");
+        edgeWriter.write("from_domain,to_domain");
         edgeWriter.newLine();
         NodeIterator iter = this.originalGraph.nodeIterator();
         while (iter.hasNext()) {
@@ -115,10 +111,9 @@ public class Subgraph {
             }
             for (int successor : distinctSuccessors) {
                 edgeWriter.write(String.format(
-                    "%d,%d", 
-                    currentId,
-                    successor
-                ));
+                        "%s,%s",
+                        domainNames.get(currentId),
+                        domainNames.get(successor)));
                 edgeWriter.newLine();
                 totalEdgeCount++;
             }
@@ -141,7 +136,7 @@ public class Subgraph {
                 graph.addVertex(node.id);
             }
         } else {
-            // based on the constructors, if this.nodeIndegrees == null then 
+            // based on the constructors, if this.nodeIndegrees == null then
             // this.nodeScores is not.
             for (NodeScore node : this.nodeScores) {
                 graph.addVertex(node.id);
@@ -151,7 +146,8 @@ public class Subgraph {
         NodeIterator iter = this.originalGraph.nodeIterator();
         while (iter.hasNext()) {
             int currentId = iter.nextInt();
-            if (!graph.containsVertex(currentId)) continue;
+            if (!graph.containsVertex(currentId))
+                continue;
             HashSet<Integer> distinctSuccessors = new HashSet<>();
             int[] successors = iter.successorArray();
             int successorCount = iter.outdegree();
@@ -165,7 +161,7 @@ public class Subgraph {
                 graph.addEdge(currentId, distinctSuccessor);
             }
         }
-        
+
         return graph;
     }
 }
