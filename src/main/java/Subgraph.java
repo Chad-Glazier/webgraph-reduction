@@ -36,13 +36,16 @@ public class Subgraph {
      * @param m The size of the final graph.
      * @param graph The original webgraph.
      * @param transpose The transpose of {@code graph}.
-     * @param nodeDomainFile a path to the associated file that relates
+     * @param nodeDomainFile A path to the associated file that relates
      * node ID's to their domain names.
+     * @param statsFile A path the the associated ".stats" file. This is
+     * needed to find the total number of edges.
      */
-    Subgraph(int n, int m, ImmutableGraph graph, ImmutableGraph transpose, String nodeDomainFile) throws IOException {
+    Subgraph(int n, int m, ImmutableGraph graph, ImmutableGraph transpose, String nodeDomainFile) throws IOException {        
         System.out.printf("Producing new subgraph. This may take a while.\n");
 
         // First, we get the top n indegrees.
+        long totalIndegree = 0; // we need this later to calculate indegree share.
         NodeIterator iter = transpose.nodeIterator();
         PriorityQueue<NodeIndegree> topIndegrees = new PriorityQueue<>(n);
         while(iter.hasNext()) {
@@ -56,6 +59,7 @@ public class Subgraph {
             }
             distinctPredecessors.remove(currentId);
             currentIndegree = distinctPredecessors.size();
+            totalIndegree += currentIndegree;
             if (topIndegrees.size() < n) {
                 topIndegrees.add(new NodeIndegree(currentId, currentIndegree));
                 continue;
@@ -69,11 +73,15 @@ public class Subgraph {
         System.out.println("Finished finding the top " + topIndegrees.size() + " indegrees.");
         System.out.println("Now constructing the subgraph from those nodes:");
 
+        // Make a map that relates the top n nodes to their in-degrees (we'll need it later).
+        HashMap<Integer, Integer> indegreeMap = new HashMap<>();
         // Now we construct the subgraph.
         int totalEdges = 0;
         SimpleDirectedGraph<Integer, SubgraphEdge> subgraph = new SimpleDirectedGraph<>(SubgraphEdge.class);
         while (!topIndegrees.isEmpty()) {
-            subgraph.addVertex(topIndegrees.poll().id);
+            NodeIndegree node = topIndegrees.poll();
+            indegreeMap.put(node.id, node.indegree);
+            subgraph.addVertex(node.id);
         }
         iter = graph.nodeIterator();
         while (iter.hasNext()) {
@@ -151,40 +159,14 @@ public class Subgraph {
         }
         reader.close();
 
-        System.out.printf(" domain names recored...\n");
+        System.out.printf(" domain names recorded...\n");
 
-        // Next, we assign each vertex an outdegree, then indegree.
-        iter = graph.nodeIterator();
-        while (iter.hasNext()) {
-            int currentId = iter.nextInt();
-            if (!subgraph.containsVertex(currentId)) continue;
-            int[] successors = iter.successorArray();
-            int successorCount = iter.outdegree();
-            HashSet<Integer> distinctSuccessors = new HashSet<>();
-            for (int i = 0; i < successorCount; i++) {
-                distinctSuccessors.add(successors[i]);
-            }
-            distinctSuccessors.remove(currentId);
-            this.nodeInfo.get(currentId).originalOutdegree = distinctSuccessors.size();
+        // Next, we assign each vertex their share of the total indegree.
+        for (int id : includedIds) {
+            this.nodeInfo.get(id).indegreeShare = ((double) indegreeMap.get(id)) / ((double) totalIndegree);
         }
 
-        System.out.printf(" outdegrees recored...\n");
-        
-        iter = transpose.nodeIterator();
-        while (iter.hasNext()) {
-            int currentId = iter.nextInt();
-            if (!subgraph.containsVertex(currentId)) continue;
-            int[] predecessors = iter.successorArray();
-            int predecessorCount = iter.outdegree();
-            HashSet<Integer> distinctPredecessors = new HashSet<>();
-            for (int i = 0; i < predecessorCount; i++) {
-                distinctPredecessors.add(predecessors[i]);
-            }
-            distinctPredecessors.remove(currentId);
-            this.nodeInfo.get(currentId).originalIndegree = distinctPredecessors.size();
-        }
-
-        System.out.printf(" indegrees recored...\n");
+        System.out.printf(" indegrees recorded...\n");
         System.out.printf("Graph complete with %d nodes and %d edges.\n", 
             this.subgraph.vertexSet().size(), this.subgraph.edgeSet().size()
         );

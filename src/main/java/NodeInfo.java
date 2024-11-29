@@ -1,6 +1,5 @@
 public class NodeInfo {
-    public int originalOutdegree;
-    public int originalIndegree;
+    public double indegreeShare;
     public String domainName;
     public double relativePageRank;
 
@@ -9,8 +8,7 @@ public class NodeInfo {
      * to their zero-values (numbers default to `0`, strings to `""`, etc.)
      */
     NodeInfo() {
-        this.originalIndegree = 0;
-        this.originalOutdegree = 0;
+        this.indegreeShare = 0.0;
         this.domainName = "";
         this.relativePageRank = 0.0;
     }
@@ -21,7 +19,7 @@ public class NodeInfo {
      * {@link #csvRow()}.
      */
     public static String csvHeader() {
-        return "domain,pagerank,indegree,outdegree";
+        return "domain,pagerank,indegree_share";
     }
 
     /**
@@ -29,9 +27,8 @@ public class NodeInfo {
      * and would match the CSV headers returned by {@link #csvHeader()}.
      */
     public String csvRow() {
-        return String.format("%s,%f,%d,%d",
-            this.domainName, this.relativePageRank,
-            this.originalIndegree, this.originalOutdegree
+        return String.format("%s,%.12f,%.12f",
+            this.domainName, this.relativePageRank, this.indegreeShare
         );
     }
 }
