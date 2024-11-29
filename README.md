@@ -11,15 +11,20 @@ The reduced data can be found [here](https://drive.google.com/drive/folders/1odj
 All data files should be found in the top-level `data` directory. They are omitted from this repository, so for the sake of reproducibility the steps taken to obtain/format them are listed here.
 
 1. The following files were downloaded from [CommonCrawl's 2018 web crawl](https://data.commoncrawl.org/projects/hyperlinkgraph/cc-main-2018-19-nov-dec-jan/index.html).
-    - `cc-main-2018-19-nov-dec-jan-host-vertices.paths.gz`: This file contains a list of paths to download 42 separate compressed text files. Each of these files were downloaded, uncompressed, and then concatenated into a single text file named `2018-node-domains.txt`. Since the files are fairly large, it's not practical to copy+paste the files together. If you are on Linux, I would recommend repeatedly running `cat file1.txt >> 2024-node-domains.txt` for each of the files. The result should be a text file just over 13 GB.
+    - `cc-main-2018-19-nov-dec-jan-host-vertices.paths.gz`: This file contains a list of paths to download 42 separate compressed text files. Each of these files were downloaded, uncompressed, and then concatenated into a single text file named `2018-node-domains.txt`. Since the files are fairly large, it's not practical to copy+paste the files together. If you are able to run bash scripts, there is one at the top level named `domains.sh`. If you download the paths file for the vertices of a given webgraph, extract it to a text file named "paths-file.txt" then run the following, the paths will automatically be downloaded and concatenated into a proper domains file.
+    ```bash
+    chmod u+x ./domains.sh;
+    ./domains.sh paths-file.txt ./data/XXXX-node-domains.txt;
+    ``` 
     - `cc-main-2018-19-nov-dec-jan-host.graph`, `cc-main-2018-19-nov-dec-jan-host.properties`: These two files represent the main webgraph; these files were renamed to `2018.graph` and `2018.properties`, respectively.
     - `cc-main-2018-19-nov-dec-jan-host-t.graph`, `cc-main-2018-19-nov-dec-jan-host-t.properties`: These files represent the transpose of the webgraph; these files were renamed to `2018-t.graph` and `2018-t.properties`, respectively.
 2. The following files were downloaded from [CommonCrawl's 2024 web crawl](https://data.commoncrawl.org/projects/hyperlinkgraph/cc-main-2024-jul-aug-sep/index.html).
     - `cc-main-2024-jul-aug-sep-host-vertices.paths.gz`: This file contains a list of paths to download 15 separate compressed text files. Each of these 15 files were downloaded, uncompressed, and then concatenated into a single text file named `2024-node-domains.txt` (which came out to about 10 GB).
     - `cc-main-2024-jul-aug-sep-host.graph`, `cc-main-2024-jul-aug-sep-host.properties`: These two files represent the main webgraph; these files were renamed to `2024.graph` and `2024.properties`, respectively.
     - `cc-main-2024-jul-aug-sep-host-t.graph`, `cc-main-2024-jul-aug-sep-host-t.properties`: These files represent the transpose of the webgraph; these files were renamed to `2024-t.graph` and `2024-t.properties`, respectively.
+3. Similarly to how files were downloaded for 2018 and 2024 data, so too were files downloaded and renamed for [2020 data](https://data.commoncrawl.org/projects/hyperlinkgraph/cc-main-2020-21-oct-nov-jan/index.html) and [2022 data](https://data.commoncrawl.org/projects/hyperlinkgraph/cc-main-2021-22-oct-nov-jan/index.html).
 
-All totaled, the `data` directory has 10 distinct files for a combined 50 GB.
+All totaled, the `data` directory has 20 distinct files for a combined 100 GB.
 
 # Running the App
 

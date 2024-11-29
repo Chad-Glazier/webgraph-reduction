@@ -5,7 +5,12 @@ import it.unimi.dsi.webgraph.ImmutableGraph;
 
 public class App {
     public static void main(String[] args) {
-        String[] years = { "2018", "2024" };
+        String[] years = { 
+            "2018",
+            "2020",
+            "2022", 
+            "2024" 
+        };
         for (String year : years) {
             // generate a graph with the top 30K in-degrees, and one with the top 
             // 10K pagerank scores from that subgraph.
