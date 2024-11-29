@@ -23,9 +23,10 @@ public class Subgraph {
     
     /**
      * Constructs a new, reduced subgraph in a two-step process:
-     * 1. First, a subgraph of n nodes is produced from the original
+     * 
+     * - First, a subgraph of n nodes is produced from the original
      * graph based on in-degree.
-     * 2. Second, the pagerank score of each node in the subgraph is
+     * - Second, the pagerank score of each node in the subgraph is
      * calculated, and the top m nodes are taken to form the final
      * subgraph.
      * 
@@ -39,6 +40,8 @@ public class Subgraph {
      * node ID's to their domain names.
      */
     Subgraph(int n, int m, ImmutableGraph graph, ImmutableGraph transpose, String nodeDomainFile) throws IOException {
+        System.out.printf("Producing new subgraph. This may take a while.\n");
+
         // First, we get the top n indegrees.
         NodeIterator iter = transpose.nodeIterator();
         PriorityQueue<NodeIndegree> topIndegrees = new PriorityQueue<>(n);
@@ -63,13 +66,11 @@ public class Subgraph {
             }
         }
 
-        System.out.println("================ FINISHED FINDING TOP INDEGREES");
-
-        System.out.println("Size of PQ: " + Integer.toString(topIndegrees.size()));
+        System.out.println("Finished finding the top " + topIndegrees.size() + " indegrees.");
+        System.out.println("Now constructing the subgraph from those nodes:");
 
         // Now we construct the subgraph.
         int totalEdges = 0;
-
         SimpleDirectedGraph<Integer, SubgraphEdge> subgraph = new SimpleDirectedGraph<>(SubgraphEdge.class);
         while (!topIndegrees.isEmpty()) {
             subgraph.addVertex(topIndegrees.poll().id);
@@ -84,14 +85,12 @@ public class Subgraph {
                 if (subgraph.containsVertex(successors[i]) && successors[i] != currentId) {
                     subgraph.addEdge(currentId, successors[i]);
                     totalEdges++;
-                    if (totalEdges % 1000000 == 0) System.out.println(Integer.toString(totalEdges) + " edges in the subgraph...");
+                    if (totalEdges % 1000000 == 0) System.out.printf("  %d edges in the subgraph...\n", totalEdges);
                 }
             }
         }
 
-        System.out.println(Integer.toString(totalEdges) + " total edges in the subgraph.");
-
-        System.out.println("================ FINISHED MAKING INDEGREES SUBGRAPH");
+        System.out.printf("Graph complete with %d nodes and %d edges.\n", n, totalEdges);
 
         // Now, we calculate the pagerank score and take the top m nodes.
         PageRank<Integer, SubgraphEdge> pr = new PageRank<>(subgraph);
@@ -116,9 +115,7 @@ public class Subgraph {
             includedIds[i] = nextSmallestRank;
         }
 
-        System.out.println("================ FINISHED TOP RANK SUBSET");
-        System.out.println("Size of set: " + Integer.toString(topRankSet.size()));
-
+        System.out.printf("Finished finding the top %d nodes by PageRank.\n", topRankSet.size());
         
         // Now, we produce the subgraph by reducing the existing one.
         HashSet<Integer> originalVertices = new HashSet<>(n);
@@ -135,7 +132,8 @@ public class Subgraph {
         }
         this.subgraph = subgraph;
 
-        System.out.println("================ FINISHED MAKING SUBGRAPH");
+        System.out.printf("Reduced the subgraph to %d nodes and %d edges by PageRank.\n", m, subgraph.edgeSet().size());
+        System.out.printf("Now collecting metrics on nodes:\n");
 
         // Next, we want to map each vertex to a domain name.
         Arrays.sort(includedIds);
@@ -153,7 +151,7 @@ public class Subgraph {
         }
         reader.close();
 
-        System.out.println("================ FINISHED MAPPING DOMAIN NAMES");
+        System.out.printf(" domain names recored...\n");
 
         // Next, we assign each vertex an outdegree, then indegree.
         iter = graph.nodeIterator();
@@ -164,15 +162,13 @@ public class Subgraph {
             int successorCount = iter.outdegree();
             HashSet<Integer> distinctSuccessors = new HashSet<>();
             for (int i = 0; i < successorCount; i++) {
-                if (subgraph.containsVertex(successors[i])) {
-                    distinctSuccessors.add(successors[i]);
-                }
+                distinctSuccessors.add(successors[i]);
             }
             distinctSuccessors.remove(currentId);
             this.nodeInfo.get(currentId).originalOutdegree = distinctSuccessors.size();
         }
 
-        System.out.println("================ FINISHED MAPPING OUTDEGREE");
+        System.out.printf(" outdegrees recored...\n");
         
         iter = transpose.nodeIterator();
         while (iter.hasNext()) {
@@ -182,19 +178,32 @@ public class Subgraph {
             int predecessorCount = iter.outdegree();
             HashSet<Integer> distinctPredecessors = new HashSet<>();
             for (int i = 0; i < predecessorCount; i++) {
-                if (subgraph.containsVertex(predecessors[i])) {
-                    distinctPredecessors.add(predecessors[i]);
-                }
+                distinctPredecessors.add(predecessors[i]);
             }
             distinctPredecessors.remove(currentId);
             this.nodeInfo.get(currentId).originalIndegree = distinctPredecessors.size();
         }
 
-        System.out.println("================ FINISHED MAPPING INDEGREE");
-
+        System.out.printf(" indegrees recored...\n");
+        System.out.printf("Graph complete with %d nodes and %d edges.\n", 
+            this.subgraph.vertexSet().size(), this.subgraph.edgeSet().size()
+        );
+        
         this.n = m;
     }
 
+    /**
+     * Writes the graph to file by producing two CSV's: one with a list of 
+     * nodes, and one with a list of edges. The headers of the nodes file will
+     * be given by {@link NodeInfo#csvHeader()} and the rows by 
+     * {@link NodeInfo#csvRow()}.
+     * 
+     * @param basename the filepath where the CSV files will be written. E.g.,
+     * "outdir/graph1" will produce files in the "outdir" directory (which must
+     * already exist) named "graph1_nodes.csv" and "graph1_edges.csv".
+     * @throws IOException If the path is invalid (if the {@code basename} references
+     * a directory which doesn't exist), then an exception is thrown.
+     */
     public void writeToFiles(String basename) throws IOException {
         BufferedWriter writer = new BufferedWriter(new FileWriter(basename + "_nodes.csv"));
         Integer[] sortedVertices = new Integer[this.n];
